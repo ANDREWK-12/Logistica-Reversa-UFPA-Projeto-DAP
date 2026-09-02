@@ -13,7 +13,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 def home(request):
-    total_registros = MaterialDescarte.objects.count()
+    # Contagem de registros distintos por unidade/setor
+    total_registros = MaterialDescarte.objects.values('unidade').distinct().count()
+    
+    # Soma total de todos os equipamentos/itens entregues
     total_itens = MaterialDescarte.objects.aggregate(Sum('quantidade'))['quantidade__sum'] or 0
     
     # Dados para o Gráfico de Categorias (Chart.js)
@@ -25,7 +28,7 @@ def home(request):
     totais = [item['total'] for item in dados_grafico]
 
     context = {
-        'total_registros': total_registros,
+        'total_registros': total_registros, # Exibe a quantidade de Unidades atendidas
         'total_itens': total_itens,
         'chart_labels': labels,
         'chart_data': totais,
@@ -38,7 +41,7 @@ def dashboard(request):
     # Filtro de Busca por Unidade ou Categoria
     busca = request.GET.get('busca')
     if busca:
-        descartes = descartes.filter(unidade__icontains=busca) | descartes.filter(modelo__icontains=busca)
+        descartes = descartes.filter(unidade__icontains=busca) | descartes.filter(modelo__icontains=busca) | descartes.filter(categoria__icontains=busca)
 
     return render(request, 'logistica/dashboard.html', {'descartes': descartes, 'busca': busca})
 
