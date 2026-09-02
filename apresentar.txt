@@ -1,0 +1,19 @@
+@echo off
+echo =======================================================
+echo   Iniciando o Sistema de Logistica Reversa - UFPA
+echo =======================================================
+echo.
+
+:: Garante que o script use a pasta do pendrive como base
+cd /d "%~dp0"
+
+:: Tenta instalar o Django direto no Python do computador caso nao tenha
+echo Verificando e preparando as bibliotecas necessarias...
+python -m pip install django --user --quiet
+
+:: Inicia o servidor local do Django usando o Python nativo da maquina
+echo.
+echo Ligando o servidor local...
+python manage.py runserver 127.0.0.1:8000
+
+pause

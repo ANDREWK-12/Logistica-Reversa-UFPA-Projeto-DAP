@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Doação de Materiais - UFPA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --ufpa-verde: #0f7642;
+            --ufpa-verde-light: #e7f5ee;
+            --ufpa-escuro: #310e18;
+            --bg-principal: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-principal); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar Padronizada com a Home */
+        .navbar-ufpa {
+            background-color: #ffffff;
+            backdrop-filter: blur(10px);
+            padding: 10px 0;
+            border-bottom: 4px solid var(--ufpa-verde);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+        }
+        
+        .navbar-brand-logo {
+            max-height: 65px;
+            width: auto;
+            transition: transform 0.2s ease;
+        }
+        
+        .navbar-brand-logo:hover {
+            transform: scale(1.02);
+        }
+
+        .main-container { 
+            max-width: 1240px; 
+            margin: 30px auto; 
+            padding: 0 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--ufpa-escuro);
+            margin: 0 0 5px 0;
+        }
+        .page-header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Painel de Sucesso Pós-Envio */
+        .success-box {
+            display: none;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+            box-sizing: border-box;
+        }
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background-color: var(--ufpa-verde-light);
+            color: var(--ufpa-verde);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        /* Envelopes (Cards) Modernos */
+        .card-custom { 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.02); 
+            margin-bottom: 25px; 
+            overflow: hidden; 
+            border: 1px solid var(--border-color); 
+        }
+        
+        .card-header-green { 
+            background: linear-gradient(135deg, var(--ufpa-verde) 0%, #157347 100%); 
+            color: white; 
+            padding: 18px 24px; 
+            margin: 0; 
+            font-size: 1.15rem; 
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header-dark { 
+            background: linear-gradient(135deg, var(--ufpa-escuro) 0%, #4a1a26 100%); 
+            color: white; 
+            padding: 18px 24px; 
+            margin: 0; 
+            font-size: 1.15rem; 
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body-custom { padding: 24px; }
+
+        .form-label-custom { 
+            display: block; 
+            font-weight: 700; 
+            margin-bottom: 8px; 
+            font-size: 12px; 
+            color: #475569; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .django-field-wrapper input, 
+        .django-field-wrapper select {
+            width: 100% !important; 
+            padding: 12px 14px !important; 
+            border: 1px solid #cbd5e1 !important; 
+            border-radius: 10px !important; 
+            box-sizing: border-box !important; 
+            font-size: 14px !important;
+            color: var(--text-main) !important;
+            background-color: #ffffff !important;
+            margin-bottom: 15px;
+        }
+
+        .django-field-wrapper input:focus, 
+        .django-field-wrapper select:focus {
+            outline: none;
+            border-color: var(--ufpa-verde) !important;
+            box-shadow: 0 0 0 3px rgba(15, 118, 66, 0.15);
+        }
+
+        /* Botões */
+        .btn-custom {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px; 
+            width: 100%; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary-custom { background-color: var(--ufpa-verde); color: white; }
+        .btn-primary-custom:hover { background-color: #116037; color: white; }
+
+        .btn-secondary-custom { background-color: #ffffff; color: #64748b; border: 1px solid #cbd5e1; }
+        .btn-secondary-custom:hover { background-color: #f8fafc; color: var(--text-main); }
+
+        .btn-success-custom { background: linear-gradient(135deg, var(--ufpa-escuro) 0%, #4a1a26 100%); color: white; padding: 16px; font-size: 15px; margin-top: 15px; }
+        .btn-success-custom:hover { background: #1c050a; color: white; }
+
+        .btn-download-custom { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 16px 32px; font-size: 15px; max-width: 350px; margin: 20px auto 0 auto; }
+
+        .btn-danger-sm {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-danger-sm:hover { background-color: #dc2626; color: white; }
+
+        /* Tabela */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: #f8fafc; color: #475569; font-weight: 700; font-size: 12px; text-transform: uppercase; }
+
+        footer {
+            background-color: #ffffff;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding: 25px 0;
+            margin-top: auto;
+        }
+
+        /* REGRAS DE IMPRESSÃO */
+        @media print {
+            body { background: white; color: black; padding: 0; margin: 0; }
+            .navbar-ufpa, footer, .page-header, #formColumn, .btn-custom, form, .success-box, .btn-danger-sm { display: none !important; }
+            .main-container { max-width: 100%; padding: 0; margin: 0; }
+            #tableColumn { width: 100% !important; flex: 100% !important; }
+            .card-custom { border: none; box-shadow: none; }
+            .card-header-dark { background: none !important; color: black !important; padding: 0 0 10px 0; font-size: 1.5rem; border-bottom: 2px solid black; margin-bottom: 20px; }
+            th { background-color: #eaeaea !important; color: black !important; border-bottom: 2px solid black; }
+            td { border-bottom: 1px solid #ccc !important; }
+            
+            .card-body-custom::before {
+                content: "UNIVERSIDADE FEDERAL DO PARÁ\A DIRETORIA DE ALMOXARIFADO E PATRIMÔNIO - DAP\A COORDENADORIA DE ALMOXARIFADO - CALMOX\A\A RELATÓRIO DE ENTRADA - LOGÍSTICA REVERSA\A";
+                white-space: pre; font-weight: bold; font-size: 12px; line-height: 1.5; display: block; margin-bottom: 30px; border-bottom: 1px dashed #000; padding-bottom: 15px;
+            }
+            .card-body-custom::after {
+                content: "\A\A\A\A\A_____________________________________\A Assinatura do Responsável pela Unidade\A\A\A\A_____________________________________\A Recebido no Almoxarifado Central (Data e Assinatura)";
+                white-space: pre; display: block; margin-top: 50px; font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar idêntico ao da Home -->
+    <nav class="navbar navbar-expand-lg navbar-ufpa sticky-top shadow-sm">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="navbar-brand p-0" href="{% url 'home' %}">
+                <img src="/media/logo_logistica_ufpa.png" alt="Logística Reversa UFPA" class="navbar-brand-logo">
+            </a>
+            <div>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary px-3 py-2 fw-bold rounded-3">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar à Página Inicial
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        
+        <div class="page-header" id="pageHeader">
+            <h1>Triagem e Cadastro de Materiais</h1>
+            <p>Monte o inventário de resíduos tecnológicos da sua unidade antes do envio definitivo ao Almoxarifado.</p>
+        </div>
+
+        <!-- Alertas de Confirmação -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Box de Sucesso Pós-Submissão -->
+        <div class="success-box" id="successBox">
+            <div class="success-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h2 style="margin: 0 0 10px 0; color: var(--ufpa-verde); font-weight: 800;">Lote Registrado com Sucesso!</h2>
+            <p class="text-muted" style="margin: 0 0 20px 0; font-size: 1.05rem;">Os dados foram armazenados no sistema. Clique abaixo para gerar e imprimir a Guia Oficial de Entrega.</p>
+            
+            <button onclick="window.print()" class="btn-custom btn-download-custom">
+                <i class="bi bi-printer-fill fs-5"></i> Baixar e Imprimir Guia Oficial
+            </button>
+            
+            <div style="margin-top: 25px;">
+                <a href="{% url 'home' %}" class="btn-custom btn-secondary-custom" style="max-width: 200px; margin: 0 auto;">Finalizar e Voltar à Home</a>
+            </div>
+        </div>
+
+        <div class="row g-4" id="mainRow">
+            <!-- Form Esquerda -->
+            <div class="col-lg-5" id="formColumn">
+                <div class="card-custom">
+                    <h4 class="card-header-green">
+                        <i class="bi bi-plus-square-fill me-1"></i> Inserir Item no Lote
+                    </h4>
+                    <div class="card-body-custom">
+                        <form method="POST">
+                            {% csrf_token %}
+                            
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label class="form-label-custom">{{ field.label }}</label>
+                                    <div class="django-field-wrapper">
+                                        {{ field }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            <button type="submit" name="adicionar_item" class="btn-custom btn-primary-custom">
+                                <i class="bi bi-plus-lg"></i> Adicionar à Lista Provisória
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela Direita -->
+            <div class="col-lg-7" id="tableColumn">
+                <div class="card-custom">
+                    <h4 class="card-header-dark">
+                        <i class="bi bi-list-check me-1"></i> Lista do Lote Atual
+                    </h4>
+                    <div class="card-body-custom">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Unidade</th>
+                                        <th>Categoria</th>
+                                        <th>Modelo / Descrição</th>
+                                        <th class="text-center">Qtd</th>
+                                        <th class="text-center">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in lista_temporaria %}
+                                    <tr>
+                                        <td style="font-weight: 600; color: var(--ufpa-escuro);">{{ item.unidade }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ item.categoria_exibicao }}</span></td>
+                                        <td class="text-muted">{{ item.modelo }}</td>
+                                        <td class="text-center" style="font-weight: 700;">{{ item.quantidade }}</td>
+                                        <td class="text-center">
+                                            <a href="{% url 'remover_item_sessao' forloop.counter0 %}" class="btn-danger-sm" title="Excluir este item da lista">
+                                                <i class="bi bi-trash3-fill"></i> Rem
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-5">
+                                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                                            Nenhum material inserido até o momento.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if lista_temporaria %}
+                        <form method="POST" id="formFinalizar" onsubmit="processarEnvio(event)">
+                            {% csrf_token %}
+                            <input type="hidden" name="finalizar_registro" value="1">
+                            <button type="submit" class="btn-custom btn-success-custom">
+                                <i class="bi bi-check2-circle fs-5"></i> CONSOLIDAR LOTE E GERAR RELATÓRIO
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <div class="fw-bold text-dark tracking-wide font-monospace small mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">
+                UNIVERSIDADE FEDERAL DO PARÁ • CAMPUS BELÉM
+            </div>
+            <div style="font-size: 11px; color: #94a3b8;">
+                Copyright &copy; 2002-2026 UFPA | Gestão Temática Interna.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function processarEnvio(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('formFinalizar');
+            const formData = new FormData(form);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => {
+                document.getElementById('pageHeader').style.display = 'none';
+                document.getElementById('formColumn').style.display = 'none';
+                document.getElementById('formFinalizar').style.display = 'none';
+                document.querySelectorAll('.btn-danger-sm').forEach(el => el.style.display = 'none');
+                
+                const tableCol = document.getElementById('tableColumn');
+                tableCol.classList.remove('col-lg-7');
+                tableCol.classList.add('col-12');
+                
+                document.getElementById('successBox').style.display = 'block';
+            }).catch(error => {
+                console.error('Erro ao submeter lote:', error);
+                alert('Ocorreu um erro ao salvar o lote. Tente novamente.');
+            });
+        }
+    </script>
+</body>
+</html>
