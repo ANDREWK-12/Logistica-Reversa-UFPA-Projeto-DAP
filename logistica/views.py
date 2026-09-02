@@ -6,6 +6,7 @@ from .models import MaterialDescarte
 from .forms import MaterialDescarteForm
 
 import csv
+import io
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -38,12 +39,51 @@ def home(request):
 def dashboard(request):
     descartes = MaterialDescarte.objects.all().order_by('-data_registro')
     
-    # Filtro de Busca por Unidade ou Categoria
-    busca = request.GET.get('busca')
-    if busca:
-        descartes = descartes.filter(unidade__icontains=busca) | descartes.filter(modelo__icontains=busca) | descartes.filter(categoria__icontains=busca)
+    # 1. Filtros da Busca
+    busca = request.GET.get('busca', '')
+    unidade_filtro = request.GET.get('unidade', '')
 
-    return render(request, 'logistica/dashboard.html', {'descartes': descartes, 'busca': busca})
+    if busca:
+        descartes = descartes.filter(
+            unidade__icontains=busca) | descartes.filter(
+            modelo__icontains=busca) | descartes.filter(
+            categoria__icontains=busca)
+
+    if unidade_filtro:
+        descartes = descartes.filter(unidade=unidade_filtro)
+
+    # 2. Dados para Métricas Rápidas
+    total_itens = descartes.aggregate(Sum('quantidade'))['quantidade__sum'] or 0
+    total_unidades = MaterialDescarte.objects.values('unidade').distinct().count()
+
+    # 3. Lista de Unidades Únicas para o filtro Dropdown
+    lista_unidades = MaterialDescarte.objects.values_list('unidade', flat=True).distinct().order_by('unidade')
+
+    # 4. Dados para Gráfico 1: Itens por Categoria
+    categorias_query = descartes.values('categoria').annotate(total=Sum('quantidade'))
+    choices_dict = dict(MaterialDescarteForm().fields['categoria'].choices)
+    
+    cat_labels = [choices_dict.get(item['categoria'], item['categoria']) for item in categorias_query]
+    cat_totais = [item['total'] for item in categorias_query]
+
+    # 5. Dados para Gráfico 2: Top Unidades que mais entregaram
+    unidades_query = descartes.values('unidade').annotate(total=Sum('quantidade')).order_by('-total')[:5]
+    uni_labels = [item['unidade'] for item in unidades_query]
+    uni_totais = [item['total'] for item in unidades_query]
+
+    context = {
+        'descartes': descartes,
+        'busca': busca,
+        'unidade_filtro': unidade_filtro,
+        'lista_unidades': lista_unidades,
+        'total_itens': total_itens,
+        'total_unidades': total_unidades,
+        'cat_labels': cat_labels,
+        'cat_data': cat_totais,
+        'uni_labels': uni_labels,
+        'uni_data': uni_totais,
+    }
+    return render(request, 'logistica/dashboard.html', context)
 
 def exportar_csv(request):
     """ Exporta os registros do banco de dados para um arquivo CSV/Excel """
@@ -103,6 +143,7 @@ def registrar_material(request):
             lista = request.session.get('lista_materiais', [])
             
             if lista:
+                # 1. Salva no Banco de Dados
                 for item in lista:
                     MaterialDescarte.objects.create(
                         unidade=item['unidade'],
@@ -111,11 +152,9 @@ def registrar_material(request):
                         quantidade=item['quantidade']
                     )
                 
-                # PDF Generation
-                response = HttpResponse(content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="guia_descarte_ufpa_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
-                
-                doc = SimpleDocTemplate(response, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+                # 2. Cria o PDF em um Buffer isolado na memória
+                buffer = io.BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
                 story = []
                 styles = getSampleStyleSheet()
                 
@@ -171,7 +210,13 @@ def registrar_material(request):
                 story.append(tabela_assinaturas)
                 
                 doc.build(story)
+                
+                # 3. Limpa a sessão e retorna o arquivo PDF isolado
                 request.session['lista_materiais'] = []
+                buffer.seek(0)
+                
+                response = HttpResponse(buffer, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="guia_descarte_ufpa_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
                 return response
             else:
                 return redirect('home')

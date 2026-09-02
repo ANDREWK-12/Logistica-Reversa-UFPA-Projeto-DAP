@@ -26,28 +26,86 @@
         </div>
     </nav>
 
-    <div class="container">
-        <!-- Campo de Busca -->
-        <div class="row mb-3">
+    <div class="container pb-5">
+
+        <!-- CARDS DE MÉTRICAS -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-2">
+                <div class="card bg-primary text-white shadow-sm">
+                    <div class="card-body py-3">
+                        <h6 class="card-title text-white-50 text-uppercase fw-bold small mb-1">Total de Equipamentos Entregues</h6>
+                        <h2 class="display-6 fw-bold m-0">{{ total_itens }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="card bg-success text-white shadow-sm">
+                    <div class="card-body py-3">
+                        <h6 class="card-title text-white-50 text-uppercase fw-bold small mb-1">Unidades Únicas Atendidas</h6>
+                        <h2 class="display-6 fw-bold m-0">{{ total_unidades }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS DE ANÁLISE -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-secondary mb-3">Distribuição por Categoria</h6>
+                        <div style="position: relative; height: 250px;" class="d-flex justify-content-center">
+                            <canvas id="chartCategorias"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-secondary mb-3">Top Unidades (Qtd de Itens)</h6>
+                        <div style="position: relative; height: 250px;">
+                            <canvas id="chartUnidades"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAMPO DE BUSCA E FILTROS -->
+        <div class="row mb-4">
             <div class="col-12">
                 <div class="card p-3 shadow-sm">
-                    <form method="GET" class="d-flex gap-2">
-                        <input type="text" name="busca" class="form-control" placeholder="Buscar por Unidade ou Descrição do Modelo..." value="{{ busca|default:'' }}">
-                        <button type="submit" class="btn btn-dark fw-bold px-4">Buscar</button>
-                        {% if busca %}
-                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Limpar</a>
-                        {% endif %}
+                    <form method="GET" class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" name="busca" class="form-control" placeholder="Buscar por Modelo, Categoria ou Palavra-chave..." value="{{ busca|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <select name="unidade" class="form-select">
+                                <option value="">-- Filtrar por Unidade (Todas) --</option>
+                                {% for u in lista_unidades %}
+                                    <option value="{{ u }}" {% if u == unidade_filtro %}selected{% endif %}>{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-dark fw-bold w-100">Filtrar</button>
+                            {% if busca or unidade_filtro %}
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Limpar</a>
+                            {% endif %}
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
 
+        <!-- TABELA DE MATERIAIS -->
         <div class="row">
             <div class="col-12">
                 <div class="card shadow-sm">
                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
                         <h5 class="mb-0 fw-bold">Painel Geral de Materiais Recebidos</h5>
-                        <span class="badge bg-success fs-6">Total Registrado: {{ descartes|length }}</span>
+                        <span class="badge bg-success fs-6">Registros Exibidos: {{ descartes|length }}</span>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -94,5 +152,53 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // 1. Gráfico de Categorias
+        const ctxCat = document.getElementById('chartCategorias').getContext('2d');
+        new Chart(ctxCat, {
+            type: 'doughnut',
+            data: {
+                labels: {{ cat_labels|safe }},
+                datasets: [{
+                    data: {{ cat_data|safe }},
+                    backgroundColor: ['#310e18', '#0d6efd', '#198754', '#ffc107', '#6f42c1', '#0dcaf0', '#dc3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // 2. Gráfico de Unidades
+        const ctxUni = document.getElementById('chartUnidades').getContext('2d');
+        new Chart(ctxUni, {
+            type: 'bar',
+            data: {
+                labels: {{ uni_labels|safe }},
+                datasets: [{
+                    label: 'Total de Itens',
+                    data: {{ uni_data|safe }},
+                    backgroundColor: '#310e18',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
