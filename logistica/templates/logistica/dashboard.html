@@ -3,132 +3,502 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Logística Reversa UFPA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Painel de Gestão - Logística Reversa UFPA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar-brand { font-weight: bold; }
-        .card { border: none; border-radius: 8px; }
-        .bg-ufpa-escuro { background-color: #310e18 !important; }
+        :root {
+            --ufpa-green: #0f7642;
+            --ufpa-green-dark: #0b5b33;
+            --ufpa-green-light: #e7f5ee;
+            --ufpa-maroon: #310e18;
+            --ufpa-maroon-light: #f5eff1;
+            --page-bg: #f5f7fa;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            background: var(--page-bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        .dashboard-navbar {
+            background: var(--ufpa-maroon);
+            border-bottom: 4px solid var(--ufpa-green);
+        }
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 1.25rem;
+        }
+        .brand-caption {
+            display: block;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .btn-export {
+            background: var(--ufpa-green);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+        }
+        .btn-export:hover, .btn-export:focus {
+            background: var(--ufpa-green-dark);
+            color: white;
+        }
+        .btn-home {
+            border-color: rgba(255, 255, 255, 0.35);
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+        }
+        .btn-home:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .dashboard-content { max-width: 1440px; }
+        .page-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 30px 0 22px;
+        }
+        .eyebrow {
+            color: var(--ufpa-green);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .page-heading h1 {
+            margin: 4px 0 5px;
+            color: var(--ufpa-maroon);
+            font-size: clamp(1.55rem, 3vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+        .page-heading p { margin: 0; color: var(--text-muted); }
+        .surface-card {
+            height: 100%;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+        }
+        .metric-card {
+            position: relative;
+            overflow: hidden;
+            padding: 22px 24px;
+        }
+        .metric-card::after {
+            position: absolute;
+            content: "";
+            width: 130px;
+            height: 130px;
+            right: -38px;
+            bottom: -62px;
+            border-radius: 50%;
+            background: var(--metric-tint);
+        }
+        .metric-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .metric-value {
+            margin-top: 10px;
+            color: var(--text-main);
+            font-size: clamp(2rem, 4vw, 2.55rem);
+            font-weight: 800;
+            line-height: 1;
+        }
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: var(--metric-tint);
+            color: var(--metric-color);
+            font-size: 1.35rem;
+        }
+        .metric-footnote {
+            position: relative;
+            z-index: 1;
+            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .section-card { padding: 22px; }
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: var(--ufpa-maroon-light);
+            color: var(--ufpa-maroon);
+            font-size: 1.1rem;
+        }
+        .section-heading h2 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 800;
+        }
+        .section-heading p {
+            margin: 3px 0 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .chart-wrap { position: relative; height: 270px; }
+        .filter-card { padding: 20px 22px; }
+        .filter-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            font-size: 0.93rem;
+            font-weight: 800;
+        }
+        .filter-title i { color: var(--ufpa-green); }
+        .form-label {
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+        }
+        .form-control, .form-select {
+            min-height: 44px;
+            border-color: #d8e0e9;
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--ufpa-green);
+            box-shadow: 0 0 0 3px rgba(15, 118, 66, 0.12);
+        }
+        .search-control { position: relative; }
+        .search-control > i {
+            position: absolute;
+            top: 50%;
+            left: 13px;
+            z-index: 2;
+            color: #94a3b8;
+            transform: translateY(-50%);
+        }
+        .search-control input { padding-left: 38px; }
+        .btn-filter {
+            min-height: 44px;
+            border-radius: 10px;
+            background: var(--ufpa-maroon);
+            color: white;
+            font-weight: 700;
+        }
+        .btn-filter:hover { background: #4a1525; color: white; }
+        .btn-clear {
+            min-height: 44px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .table-card { overflow: hidden; }
+        .table-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 22px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+        }
+        .table-card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .table-card-title h2 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 800;
+        }
+        .table-card-title p {
+            margin: 3px 0 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .record-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border: 1px solid #ccebd9;
+            border-radius: 999px;
+            background: var(--ufpa-green-light);
+            color: var(--ufpa-green-dark);
+            font-size: 0.78rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .table { --bs-table-bg: transparent; }
+        .table thead th {
+            padding-top: 13px;
+            padding-bottom: 13px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .table tbody td { padding-top: 15px; padding-bottom: 15px; }
+        .unit-name { color: var(--text-main); font-weight: 700; }
+        .category-badge {
+            display: inline-block;
+            padding: 6px 9px;
+            border: 1px solid #e7dce0;
+            border-radius: 8px;
+            background: #faf7f8;
+            color: var(--ufpa-maroon);
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+        .quantity-badge {
+            min-width: 42px;
+            display: inline-block;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: var(--ufpa-green-light);
+            color: var(--ufpa-green-dark);
+            font-weight: 800;
+        }
+        .empty-state { padding: 42px 16px !important; color: var(--text-muted); }
+        .empty-state i {
+            display: block;
+            margin-bottom: 10px;
+            color: #94a3b8;
+            font-size: 2rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .dashboard-navbar .container { gap: 12px; }
+            .brand-caption { display: none; }
+            .navbar-brand { font-size: 0.9rem; }
+            .navbar-actions { display: flex; gap: 8px; }
+            .navbar-actions .btn { padding: 8px 10px; font-size: 0.78rem; }
+            .page-heading { align-items: flex-start; flex-direction: column; margin-top: 24px; }
+            .section-card { padding: 18px; }
+            .chart-wrap { height: 250px; }
+            .table-card-header { align-items: flex-start; flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-ufpa-escuro shadow-sm mb-4">
+    <nav class="navbar navbar-dark dashboard-navbar shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">🔒 UFPA - Painel de Auditoria e Controle</a>
-            <div class="ms-auto">
-                <a href="{% url 'exportar_csv' %}" class="btn btn-success fw-bold text-white me-2">
-                    <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i> Exportar (Excel/CSV)
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <span class="brand-mark"><i class="bi bi-recycle"></i></span>
+                <span>Logística Reversa<span class="brand-caption">UFPA · Painel de gestão</span></span>
+            </a>
+            <div class="ms-auto navbar-actions">
+                <a href="{% url 'home' %}" class="btn btn-home me-2">
+                    <i class="bi bi-house-door me-1"></i><span class="d-none d-sm-inline">Início</span>
+                </a>
+                <a href="{% url 'exportar_csv' %}" class="btn btn-export">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar dados
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="container pb-5">
+    <main class="container dashboard-content pb-5">
+        <header class="page-heading">
+            <div>
+                <div class="eyebrow"><i class="bi bi-grid-1x2-fill me-1"></i> Visão geral</div>
+                <h1>Painel de materiais recebidos</h1>
+                <p>Acompanhe os registros, compare categorias e encontre os dados que precisa.</p>
+            </div>
+        </header>
 
         <!-- CARDS DE MÉTRICAS -->
-        <div class="row mb-4">
-            <div class="col-md-6 mb-2">
-                <div class="card bg-primary text-white shadow-sm">
-                    <div class="card-body py-3">
-                        <h6 class="card-title text-white-50 text-uppercase fw-bold small mb-1">Total de Equipamentos Entregues</h6>
-                        <h2 class="display-6 fw-bold m-0">{{ total_itens }}</h2>
+        <section class="row g-3 mb-4" aria-label="Indicadores do painel">
+            <div class="col-md-6">
+                <div class="surface-card metric-card" style="--metric-color: #0f7642; --metric-tint: #e7f5ee;">
+                    <div class="metric-top">
+                        <div>
+                            <div class="metric-label">Total de equipamentos entregues</div>
+                            <div class="metric-value">{{ total_itens }}</div>
+                        </div>
+                        <span class="metric-icon"><i class="bi bi-box-seam"></i></span>
                     </div>
+                    <div class="metric-footnote"><i class="bi bi-check2-circle me-1"></i> Soma das quantidades nos registros exibidos</div>
                 </div>
             </div>
-            <div class="col-md-6 mb-2">
-                <div class="card bg-success text-white shadow-sm">
-                    <div class="card-body py-3">
-                        <h6 class="card-title text-white-50 text-uppercase fw-bold small mb-1">Unidades Únicas Atendidas</h6>
-                        <h2 class="display-6 fw-bold m-0">{{ total_unidades }}</h2>
+            <div class="col-md-6">
+                <div class="surface-card metric-card" style="--metric-color: #6b2737; --metric-tint: #f5eff1;">
+                    <div class="metric-top">
+                        <div>
+                            <div class="metric-label">Unidades atendidas</div>
+                            <div class="metric-value">{{ total_unidades }}</div>
+                        </div>
+                        <span class="metric-icon"><i class="bi bi-buildings"></i></span>
                     </div>
+                    <div class="metric-footnote"><i class="bi bi-diagram-3 me-1"></i> Unidades distintas nos registros exibidos</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- GRÁFICOS DE ANÁLISE -->
-        <div class="row mb-4">
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h6 class="fw-bold text-secondary mb-3">Distribuição por Categoria</h6>
-                        <div style="position: relative; height: 250px;" class="d-flex justify-content-center">
+        <section class="row g-3 mb-4" aria-label="Gráficos de análise">
+            <div class="col-lg-6">
+                <div class="surface-card section-card">
+                    <div class="section-heading">
+                        <span class="section-icon"><i class="bi bi-pie-chart-fill"></i></span>
+                        <div>
+                            <h2>Distribuição por categoria</h2>
+                            <p>Quantidade de materiais em cada categoria</p>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
                             <canvas id="chartCategorias"></canvas>
-                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h6 class="fw-bold text-secondary mb-3">Top Unidades (Qtd de Itens)</h6>
-                        <div style="position: relative; height: 250px;">
+            <div class="col-lg-6">
+                <div class="surface-card section-card">
+                    <div class="section-heading">
+                        <span class="section-icon"><i class="bi bi-bar-chart-line-fill"></i></span>
+                        <div>
+                            <h2>Unidades com mais entregas</h2>
+                            <p>Top 5 unidades por quantidade de itens</p>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
                             <canvas id="chartUnidades"></canvas>
-                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- CAMPO DE BUSCA E FILTROS -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card p-3 shadow-sm">
-                    <form method="GET" class="row g-2">
-                        <div class="col-md-6">
-                            <input type="text" name="busca" class="form-control" placeholder="Buscar por Modelo, Categoria ou Palavra-chave..." value="{{ busca|default:'' }}">
+        <section class="surface-card filter-card mb-4" aria-label="Busca e filtros">
+            <div class="filter-title"><i class="bi bi-funnel-fill"></i> Buscar e filtrar registros</div>
+            <form method="GET" class="row g-3 align-items-end">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label" for="busca">Busca geral</label>
+                            <div class="search-control">
+                                <i class="bi bi-search"></i>
+                                <input id="busca" type="text" name="busca" class="form-control" placeholder="Modelo, categoria ou palavra-chave..." value="{{ busca|default:'' }}">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <select name="unidade" class="form-select">
-                                <option value="">-- Filtrar por Unidade (Todas) --</option>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label" for="unidade">Unidade</label>
+                            <select id="unidade" name="unidade" class="form-select">
+                                <option value="">Todas as unidades</option>
                                 {% for u in lista_unidades %}
                                     <option value="{{ u }}" {% if u == unidade_filtro %}selected{% endif %}>{{ u }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-dark fw-bold w-100">Filtrar</button>
-                            {% if busca or unidade_filtro %}
-                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Limpar</a>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label" for="categoria">Categoria</label>
+                            <select id="categoria" name="categoria" class="form-select">
+                                <option value="">Todas as categorias</option>
+                                {% for valor, rotulo in lista_categorias %}
+                                    <option value="{{ valor }}" {% if valor == categoria_filtro %}selected{% endif %}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 d-flex gap-2">
+                            <button type="submit" class="btn btn-filter flex-grow-1"><i class="bi bi-sliders me-1"></i> Aplicar</button>
+                            {% if busca or unidade_filtro or categoria_filtro %}
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-clear" title="Limpar todos os filtros" aria-label="Limpar todos os filtros"><i class="bi bi-x-lg"></i></a>
                             {% endif %}
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+            </form>
+        </section>
 
         <!-- TABELA DE MATERIAIS -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-                        <h5 class="mb-0 fw-bold">Painel Geral de Materiais Recebidos</h5>
-                        <span class="badge bg-success fs-6">Registros Exibidos: {{ descartes|length }}</span>
+        <section class="surface-card table-card">
+                    <div class="table-card-header">
+                        <div class="table-card-title">
+                            <span class="section-icon"><i class="bi bi-clipboard2-data-fill"></i></span>
+                            <div>
+                                <h2>Registros de materiais</h2>
+                                <p>Detalhamento dos materiais recebidos pelo sistema</p>
+                            </div>
+                        </div>
+                        <span class="record-count"><i class="bi bi-list-check"></i>{{ descartes|length }} registro{{ descartes|length|pluralize:"s" }}</span>
                     </div>
-                    <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-striped table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="ps-4">Origem / Unidade</th>
+                                        <th class="ps-4"><i class="bi bi-building me-1"></i> Origem / Unidade</th>
                                         <th>Categoria</th>
                                         <th>Modelo / Descrição</th>
-                                        <th class="text-center">Quantidade</th>
-                                        <th class="pe-4 text-end">Data de Registro</th>
+                                        <th class="text-center"><i class="bi bi-box me-1"></i> Quantidade</th>
+                                        <th class="pe-4 text-end"><i class="bi bi-calendar3 me-1"></i> Data de registro</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in descartes %}
                                     <tr>
-                                        <td class="ps-4 fw-bold text-secondary">{{ item.unidade }}</td>
+                                        <td class="ps-4"><span class="unit-name"><i class="bi bi-geo-alt me-1 text-secondary"></i>{{ item.unidade }}</span></td>
                                         <td>
-                                            <span class="badge bg-light text-dark border">{{ item.get_categoria_display }}</span>
+                                            <span class="category-badge">{{ item.get_categoria_display }}</span>
                                         </td>
                                         <td>{{ item.modelo }}</td>
                                         <td class="text-center">
-                                            <span class="badge bg-primary px-3 py-2 fs-6">{{ item.quantidade }}</span>
+                                            <span class="quantity-badge">{{ item.quantidade }}</span>
                                         </td>
                                         <td class="pe-4 text-end text-muted">
                                             {{ item.data_registro|date:"d/m/Y H:i" }}
@@ -136,41 +506,50 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-5">
-                                            <p class="mb-0 fs-5">Nenhum material encontrado no registro interno.</p>
+                                        <td colspan="5" class="text-center empty-state">
+                                        <i class="bi bi-inbox"></i>
+                                        <span class="fw-bold d-block">Nenhum material encontrado</span>
+                                        <small>Altere os filtros ou limpe a busca para ver outros registros.</small>
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    {{ cat_labels|json_script:"chart-category-labels" }}
+    {{ cat_data|json_script:"chart-category-data" }}
+    {{ uni_labels|json_script:"chart-unit-labels" }}
+    {{ uni_data|json_script:"chart-unit-data" }}
+
     <script>
         // 1. Gráfico de Categorias
         const ctxCat = document.getElementById('chartCategorias').getContext('2d');
         new Chart(ctxCat, {
             type: 'doughnut',
             data: {
-                labels: {{ cat_labels|safe }},
+                labels: JSON.parse(document.getElementById('chart-category-labels').textContent),
                 datasets: [{
-                    data: {{ cat_data|safe }},
-                    backgroundColor: ['#310e18', '#0d6efd', '#198754', '#ffc107', '#6f42c1', '#0dcaf0', '#dc3545']
+                    data: JSON.parse(document.getElementById('chart-category-data').textContent),
+                    backgroundColor: ['#310e18', '#0f7642', '#c0842a', '#7451a6', '#168aad', '#b23a48', '#587b7f', '#9a6b4f'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, boxWidth: 9, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } }
+                    },
+                    tooltip: { padding: 12, backgroundColor: '#1e293b', titleFont: { weight: 'bold' } }
                 }
             }
         });
@@ -180,22 +559,35 @@
         new Chart(ctxUni, {
             type: 'bar',
             data: {
-                labels: {{ uni_labels|safe }},
+                labels: JSON.parse(document.getElementById('chart-unit-labels').textContent),
                 datasets: [{
                     label: 'Total de Itens',
-                    data: {{ uni_data|safe }},
-                    backgroundColor: '#310e18',
-                    borderRadius: 4
+                    data: JSON.parse(document.getElementById('chart-unit-data').textContent),
+                    backgroundColor: '#0f7642',
+                    hoverBackgroundColor: '#0b5b33',
+                    borderRadius: 7,
+                    maxBarThickness: 38
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0, color: '#64748b' },
+                        grid: { color: '#edf1f5' },
+                        border: { display: false }
+                    },
+                    x: {
+                        ticks: { color: '#475569' },
+                        grid: { display: false },
+                        border: { display: false }
+                    }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: { padding: 12, backgroundColor: '#1e293b', titleFont: { weight: 'bold' } }
                 }
             }
         });

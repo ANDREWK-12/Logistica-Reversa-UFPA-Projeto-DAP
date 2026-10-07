@@ -223,10 +223,83 @@
             margin-top: auto;
         }
 
+        .navbar-ufpa .btn { white-space: nowrap; }
+        .page-header p { line-height: 1.6; }
+        .card-custom { min-width: 0; }
+        .table-responsive {
+            border-radius: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-responsive:focus-visible {
+            outline: 3px solid rgba(15, 118, 66, 0.35);
+            outline-offset: 2px;
+        }
+        .btn-custom:focus-visible, .btn-danger-sm:focus-visible, .navbar-ufpa a:focus-visible {
+            outline: 3px solid rgba(15, 118, 66, 0.4);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 767.98px) {
+            .navbar-ufpa { padding: 8px 0; }
+            .navbar-brand-logo { max-height: 52px; }
+            .main-container { margin: 22px auto; padding: 0 16px; }
+            .page-header { margin-bottom: 20px; }
+            .page-header h1 { font-size: clamp(1.4rem, 5vw, 1.7rem); }
+            .page-header p { font-size: 0.9rem; }
+            .card-header-green, .card-header-dark {
+                padding: 15px 18px;
+                font-size: 1.02rem;
+            }
+            .card-body-custom { padding: 18px; }
+            .success-box { padding: 30px 22px; }
+            .success-box h2 { font-size: 1.45rem; }
+            .success-box p { font-size: 0.95rem !important; }
+            .table-responsive { margin: 0 -2px; }
+            th, td { padding: 12px 13px; }
+            footer { padding: 20px 0; }
+        }
+
+        @media (max-width: 575.98px) {
+            .navbar-ufpa .container { gap: 10px; }
+            .navbar-brand-logo { max-height: 42px; }
+            .navbar-ufpa .btn {
+                padding: 9px 11px !important;
+                font-size: 0.78rem;
+            }
+            .main-container { margin: 16px auto; padding: 0 12px; }
+            .page-header { padding-bottom: 12px; }
+            .page-header h1 { font-size: 1.35rem; line-height: 1.25; }
+            .page-header p { font-size: 0.84rem; }
+            #mainRow { --bs-gutter-y: 0.85rem; }
+            .card-custom { margin-bottom: 16px; border-radius: 13px; }
+            .card-header-green, .card-header-dark {
+                padding: 14px 15px;
+                font-size: 0.94rem;
+            }
+            .card-body-custom { padding: 15px 13px; }
+            .form-label-custom { font-size: 0.7rem; margin-bottom: 6px; }
+            .django-field-wrapper input,
+            .django-field-wrapper select {
+                min-height: 46px;
+                padding: 11px 12px !important;
+                font-size: 16px !important;
+            }
+            .btn-custom { min-height: 46px; padding: 12px 14px; }
+            .btn-success-custom { font-size: 0.88rem; }
+            .table-responsive table { min-width: 610px; }
+            th, td { padding: 11px 12px; font-size: 0.82rem; }
+            .btn-danger-sm { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; }
+            .success-box { padding: 25px 16px; }
+            .success-box h2 { font-size: 1.25rem; }
+            .btn-download-custom { width: 100%; padding: 14px 12px; font-size: 0.9rem; }
+            .success-box .btn-secondary-custom { max-width: 100% !important; }
+            footer .font-monospace { font-size: 0.68rem !important; line-height: 1.6; }
+        }
+
         /* REGRAS DE IMPRESSÃO */
         @media print {
             body { background: white; color: black; padding: 0; margin: 0; }
-            .navbar-ufpa, footer, .page-header, #formColumn, .btn-custom, form, .success-box, .btn-danger-sm { display: none !important; }
+            .navbar-ufpa, footer, .page-header, #formColumn, .btn-custom, form, .success-box, .alert, .coluna-acao { display: none !important; }
             .main-container { max-width: 100%; padding: 0; margin: 0; }
             #tableColumn { width: 100% !important; flex: 100% !important; }
             .card-custom { border: none; box-shadow: none; }
@@ -338,7 +411,7 @@
                                         <th>Categoria</th>
                                         <th>Modelo / Descrição</th>
                                         <th class="text-center">Qtd</th>
-                                        <th class="text-center">Ação</th>
+                                        <th class="text-center coluna-acao">Ação</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -348,7 +421,7 @@
                                         <td><span class="badge bg-light text-dark border">{{ item.categoria_exibicao }}</span></td>
                                         <td class="text-muted">{{ item.modelo }}</td>
                                         <td class="text-center" style="font-weight: 700;">{{ item.quantidade }}</td>
-                                        <td class="text-center">
+                                        <td class="text-center coluna-acao">
                                             <a href="{% url 'remover_item_sessao' forloop.counter0 %}" class="btn-danger-sm" title="Excluir este item da lista">
                                                 <i class="bi bi-trash3-fill"></i> Rem
                                             </a>
@@ -408,15 +481,16 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             }).then(response => {
+            }).then(() => {
                 document.getElementById('pageHeader').style.display = 'none';
                 document.getElementById('formColumn').style.display = 'none';
                 document.getElementById('formFinalizar').style.display = 'none';
                 document.querySelectorAll('.btn-danger-sm').forEach(el => el.style.display = 'none');
-                
+
                 const tableCol = document.getElementById('tableColumn');
                 tableCol.classList.remove('col-lg-7');
                 tableCol.classList.add('col-12');
-                
+
                 document.getElementById('successBox').style.display = 'block';
             }).catch(error => {
                 console.error('Erro ao submeter lote:', error);

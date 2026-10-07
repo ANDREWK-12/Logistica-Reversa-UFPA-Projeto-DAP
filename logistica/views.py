@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib import messages
-from django.db.models import Sum, Count
+from django.db.models import Q, Sum
 from .models import MaterialDescarte
 from .forms import MaterialDescarteForm
 
 import csv
 import io
 from datetime import datetime
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -42,25 +43,32 @@ def dashboard(request):
     # 1. Filtros da Busca
     busca = request.GET.get('busca', '')
     unidade_filtro = request.GET.get('unidade', '')
+    categoria_filtro = request.GET.get('categoria', '')
 
     if busca:
         descartes = descartes.filter(
-            unidade__icontains=busca) | descartes.filter(
-            modelo__icontains=busca) | descartes.filter(
-            categoria__icontains=busca)
+            Q(unidade__icontains=busca)
+            | Q(modelo__icontains=busca)
+            | Q(categoria__icontains=busca)
+        )
 
     if unidade_filtro:
         descartes = descartes.filter(unidade=unidade_filtro)
 
+    if categoria_filtro:
+        descartes = descartes.filter(categoria=categoria_filtro)
+
     # 2. Dados para Métricas Rápidas
     total_itens = descartes.aggregate(Sum('quantidade'))['quantidade__sum'] or 0
-    total_unidades = MaterialDescarte.objects.values('unidade').distinct().count()
+    total_unidades = descartes.values('unidade').distinct().count()
 
     # 3. Lista de Unidades Únicas para o filtro Dropdown
     lista_unidades = MaterialDescarte.objects.values_list('unidade', flat=True).distinct().order_by('unidade')
 
     # 4. Dados para Gráfico 1: Itens por Categoria
-    categorias_query = descartes.values('categoria').annotate(total=Sum('quantidade'))
+    categorias_query = descartes.values('categoria').annotate(
+        total=Sum('quantidade')
+    ).order_by('categoria')
     choices_dict = dict(MaterialDescarteForm().fields['categoria'].choices)
     
     cat_labels = [choices_dict.get(item['categoria'], item['categoria']) for item in categorias_query]
@@ -75,6 +83,8 @@ def dashboard(request):
         'descartes': descartes,
         'busca': busca,
         'unidade_filtro': unidade_filtro,
+        'categoria_filtro': categoria_filtro,
+        'lista_categorias': MaterialDescarte.CATEGORIAS_CHOICES,
         'lista_unidades': lista_unidades,
         'total_itens': total_itens,
         'total_unidades': total_unidades,
@@ -176,7 +186,7 @@ def registrar_material(request):
                 story.append(Spacer(1, 20))
                 
                 unidade_origem = lista[0]['unidade']
-                story.append(Paragraph(f"<b>Unidade/Setor de Origem:</b> {unidade_origem}", normal_style))
+                story.append(Paragraph(f"<b>Unidade/Setor de Origem:</b> {escape(unidade_origem)}", normal_style))
                 story.append(Paragraph("<b>Instruções:</b> Imprima este relatório e apresente-o assinado junto com os itens físicos no local de coleta.", normal_style))
                 story.append(Spacer(1, 20))
                 
@@ -184,8 +194,8 @@ def registrar_material(request):
                 
                 for item in lista:
                     dados_tabela.append([
-                        Paragraph(item['categoria_exibicao'], table_cell_style),
-                        Paragraph(item['modelo'], table_cell_style),
+                        Paragraph(escape(item['categoria_exibicao']), table_cell_style),
+                        Paragraph(escape(item['modelo']), table_cell_style),
                         Paragraph(str(item['quantidade']), table_cell_style)
                     ])
                 
