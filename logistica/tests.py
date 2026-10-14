@@ -69,6 +69,20 @@ class RegistroRelatorioTests(TestCase):
                 'modelo': 'Pilha AA',
                 'quantidade': 2,
             },
+            {
+                'unidade': 'ICEN',
+                'categoria': 'toner',
+                'categoria_exibicao': 'Toner',
+                'modelo': 'Toner A2',
+                'quantidade': 1,
+            },
+            {
+                'unidade': 'ICED',
+                'categoria': 'toner',
+                'categoria_exibicao': 'Toner',
+                'modelo': 'Toner B',
+                'quantidade': 1,
+            },
         ]
         session.save()
 
@@ -82,5 +96,7 @@ class RegistroRelatorioTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn('attachment;', response['Content-Disposition'])
         self.assertTrue(response.content.startswith(b'%PDF'))
-        self.assertEqual(MaterialDescarte.objects.count(), 2)
+        self.assertIn(b'/Count 2', response.content)
+        self.assertGreaterEqual(response.content.count(b'/Subtype /Image'), 6)
+        self.assertEqual(MaterialDescarte.objects.count(), 4)
         self.assertEqual(self.client.session['lista_materiais'], [])

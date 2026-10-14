@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib import messages
+from django.conf import settings
 from django.db.models import Q, Sum
 from .models import MaterialDescarte
 from .forms import MaterialDescarteForm
@@ -8,11 +9,14 @@ from .forms import MaterialDescarteForm
 import csv
 import io
 from datetime import datetime
+from pathlib import Path
 from xml.sax.saxutils import escape
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from django.utils import timezone
 
 def home(request):
     # Contagem de registros distintos por unidade/setor
@@ -118,6 +122,346 @@ def exportar_csv(request):
 
     return response
 
+def gerar_relatorio_entrega(lista):
+    page_size = landscape(A4)
+    page_width, page_height = page_size
+    margin = 34
+    content_width = page_width - 2 * margin
+    asset_dir = Path(settings.BASE_DIR) / 'media' / 'relatorio_visual'
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=page_size,
+        rightMargin=margin,
+        leftMargin=margin,
+        topMargin=100,
+        bottomMargin=62,
+    )
+    styles = getSampleStyleSheet()
+    verde = colors.HexColor('#1D7448')
+    verde_escuro = colors.HexColor('#155C38')
+    verde_claro = colors.HexColor('#EFF7F1')
+    bordô = colors.HexColor('#4A1525')
+    texto = colors.HexColor('#334155')
+    texto_suave = colors.HexColor('#64748B')
+    cinza_claro = colors.HexColor('#F8FAFC')
+    linha = colors.HexColor('#D7E0E7')
+
+    titulo_style = ParagraphStyle(
+        'RelatorioTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        leading=17,
+        textColor=bordô,
+        alignment=1,
+        spaceAfter=4,
+    )
+    normal_style = ParagraphStyle(
+        'RelatorioNormal',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=13,
+        textColor=texto,
+    )
+    label_style = ParagraphStyle(
+        'RelatorioLabel',
+        parent=normal_style,
+        fontName='Helvetica-Bold',
+    )
+    section_style = ParagraphStyle(
+        'RelatorioSection',
+        parent=normal_style,
+        fontName='Helvetica-Bold',
+        fontSize=9.5,
+        leading=12,
+        textColor=colors.white,
+    )
+    header_style = ParagraphStyle(
+        'RelatorioTableHeader',
+        parent=normal_style,
+        fontName='Helvetica-Bold',
+        fontSize=9.5,
+        leading=11,
+        textColor=colors.white,
+        alignment=1,
+    )
+    cell_style = ParagraphStyle(
+        'RelatorioTableCell',
+        parent=normal_style,
+        fontSize=10,
+        leading=12,
+    )
+    category_style = ParagraphStyle(
+        'RelatorioCategory',
+        parent=cell_style,
+        fontName='Helvetica-Bold',
+        textColor=verde_escuro,
+    )
+    quantity_style = ParagraphStyle(
+        'RelatorioQuantity',
+        parent=cell_style,
+        fontName='Helvetica-Bold',
+        alignment=1,
+    )
+    signature_style = ParagraphStyle(
+        'RelatorioSignature',
+        parent=normal_style,
+        alignment=1,
+        textColor=texto_suave,
+    )
+    total_style = ParagraphStyle(
+        'RelatorioTotal',
+        parent=header_style,
+        alignment=2,
+    )
+    date_text = timezone.localdate().strftime('%d/%m/%Y')
+    categorias = MaterialDescarte.CATEGORIAS_CHOICES
+
+    def desenhar_identidade_visual(canvas, _doc):
+        canvas.saveState()
+        canvas.setFillColor(verde)
+        canvas.rect(0, page_height - 8, page_width, 8, stroke=0, fill=1)
+
+        logo_x = page_width * 0.15
+        logo_y = page_height - 52
+        for filename, center_x, max_width, max_height, center_y in [
+            ('image2.png', logo_x, 72, 72, logo_y),
+            ('image1.jpeg', page_width * 0.85, 54, 72, page_height - 52),
+        ]:
+            image = ImageReader(str(asset_dir / filename))
+            image_width, image_height = image.getSize()
+            scale = min(max_width / image_width, max_height / image_height)
+            width = image_width * scale
+            height = image_height * scale
+            canvas.drawImage(
+                image,
+                center_x - width / 2,
+                center_y - height / 2,
+                width=width,
+                height=height,
+                mask='auto',
+            )
+
+        mascot = ImageReader(str(asset_dir / 'image3.png'))
+        mascot_width, mascot_height = mascot.getSize()
+        mascot_scale = min(25 / mascot_width, 27 / mascot_height)
+        mascot_width *= mascot_scale
+        mascot_height *= mascot_scale
+        canvas.drawImage(
+            mascot,
+            logo_x - mascot_width / 2,
+            logo_y - mascot_height / 2,
+            width=mascot_width,
+            height=mascot_height,
+            mask='auto',
+        )
+
+        canvas.setFillColor(verde_escuro)
+        canvas.setFont('Helvetica-Bold', 14)
+        canvas.drawCentredString(page_width / 2, page_height - 43, 'LOGÍSTICA REVERSA')
+        canvas.setFillColor(texto_suave)
+        canvas.setFont('Helvetica', 9.5)
+        canvas.drawCentredString(page_width / 2, page_height - 57, 'UNIVERSIDADE FEDERAL DO PARÁ')
+
+        canvas.setStrokeColor(colors.HexColor('#cbd5e1'))
+        canvas.setLineWidth(0.7)
+        canvas.line(margin, 52, page_width - margin, 52)
+        footer_y = 29
+        for filename, center_x in [
+            ('image6.png', page_width * 0.22),
+            ('image4.png', page_width * 0.5),
+            ('image5.png', page_width * 0.78),
+        ]:
+            image = ImageReader(str(asset_dir / filename))
+            image_width, image_height = image.getSize()
+            scale = min(185 / image_width, 31 / image_height)
+            width = image_width * scale
+            height = image_height * scale
+            canvas.drawImage(
+                image,
+                center_x - width / 2,
+                footer_y - height / 2,
+                width=width,
+                height=height,
+                mask='auto',
+            )
+        canvas.setFillColor(texto_suave)
+        canvas.setFont('Helvetica', 8)
+        canvas.drawRightString(page_width - margin, 12, f'Página {_doc.page}')
+        canvas.restoreState()
+
+    unidades = {}
+    for item in lista:
+        unidades.setdefault(item['unidade'], []).append(item)
+
+    story = []
+    for unidade_index, (unidade, itens_unidade) in enumerate(unidades.items()):
+        if unidade_index:
+            story.append(PageBreak())
+
+        story.extend([
+            Paragraph(
+                'RELATÓRIO DE ENTREGAS DE MATERIAIS DA LOGÍSTICA REVERSA DA UFPA',
+                titulo_style,
+            ),
+            Paragraph(
+                'Formulário de entrega para registro e quantificação dos materiais, '
+                'conforme a Política Nacional de Resíduos Sólidos (Lei nº 12.305/2010).',
+                normal_style,
+            ),
+            Spacer(1, 9),
+        ])
+
+        dados_identificacao = [[
+            Paragraph('IDENTIFICAÇÃO DA UNIDADE', section_style),
+            '',
+            '',
+            '',
+        ]]
+        dados_identificacao = [
+            *dados_identificacao,
+            [
+                Paragraph('Unidade Gestora:', label_style),
+                Paragraph(escape(unidade), normal_style),
+                Paragraph('Data:', label_style),
+                Paragraph(date_text, normal_style),
+            ],
+            [
+                Paragraph('Servidor responsável:', label_style),
+                Paragraph(' ', normal_style),
+                Paragraph('Contato (telefone/e-mail):', label_style),
+                Paragraph(' ', normal_style),
+            ],
+            [
+                Paragraph('Local de Entrega:', label_style),
+                Paragraph('Térreo do prédio da PROAD', normal_style),
+                '',
+                '',
+            ],
+        ]
+        tabela_identificacao = Table(
+            dados_identificacao,
+            colWidths=[
+                content_width * 0.2,
+                content_width * 0.34,
+                content_width * 0.2,
+                content_width * 0.26,
+            ],
+        )
+        tabela_identificacao.setStyle(TableStyle([
+            ('SPAN', (0, 0), (-1, 0)),
+            ('BACKGROUND', (0, 0), (-1, 0), verde_escuro),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, linha),
+            ('BACKGROUND', (0, 1), (0, -1), cinza_claro),
+            ('BACKGROUND', (2, 1), (2, 2), cinza_claro),
+            ('SPAN', (1, 3), (3, 3)),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        story.extend([tabela_identificacao, Spacer(1, 8)])
+
+        dados_tabela = [[
+            Paragraph('MATERIAIS ENTREGUES', section_style),
+            '',
+            '',
+        ], [
+            Paragraph('CATEGORIA', header_style),
+            Paragraph('REFERÊNCIA / MODELO', header_style),
+            Paragraph('QUANTIDADE<br/>ENTREGUE', header_style),
+        ]]
+        estilo_tabela = [
+            ('SPAN', (0, 0), (2, 0)),
+            ('BACKGROUND', (0, 0), (-1, 0), verde_escuro),
+            ('BACKGROUND', (0, 1), (-1, 1), bordô),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 1), (-1, -1), 0.45, linha),
+            ('ALIGN', (2, 1), (2, -1), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]
+        itens_por_categoria = {}
+        for item in itens_unidade:
+            itens_por_categoria.setdefault(item['categoria'], []).append(item)
+
+        for categoria, rotulo in categorias:
+            itens_categoria = itens_por_categoria.get(categoria, [])
+            if not itens_categoria:
+                continue
+
+            linha_inicio = len(dados_tabela)
+            for item_index, item in enumerate(itens_categoria):
+                dados_tabela.append([
+                    Paragraph(escape(rotulo), category_style) if item_index == 0 else '',
+                    Paragraph(escape(item['modelo']), cell_style),
+                    Paragraph(str(item['quantidade']), quantity_style),
+                ])
+            if len(itens_categoria) > 1:
+                estilo_tabela.append(
+                    ('SPAN', (0, linha_inicio), (0, len(dados_tabela) - 1))
+                )
+            estilo_tabela.extend([
+                ('BACKGROUND', (0, linha_inicio), (0, len(dados_tabela) - 1), verde_claro),
+                ('BACKGROUND', (1, linha_inicio), (-1, len(dados_tabela) - 1), cinza_claro),
+                ('LINEBELOW', (0, len(dados_tabela) - 1), (-1, len(dados_tabela) - 1), 0.8, linha),
+            ])
+
+        total_unidade = sum(item['quantidade'] for item in itens_unidade)
+        dados_tabela.append([
+            Paragraph('TOTAL DE ITENS ENTREGUES', total_style),
+            '',
+            Paragraph(str(total_unidade), total_style),
+        ])
+        estilo_tabela.extend([
+            ('SPAN', (0, -1), (1, -1)),
+            ('BACKGROUND', (0, -1), (-1, -1), bordô),
+            ('LINEABOVE', (0, -1), (-1, -1), 1, bordô),
+        ])
+        tabela_materiais = Table(
+            dados_tabela,
+            colWidths=[
+                content_width * 0.24,
+                content_width * 0.58,
+                content_width * 0.18,
+            ],
+            repeatRows=2,
+        )
+        tabela_materiais.setStyle(TableStyle(estilo_tabela))
+        story.extend([
+            tabela_materiais,
+            Spacer(1, 12),
+            Table(
+                [[
+                    Paragraph(
+                        '<br/>________________________________________<br/>'
+                        '<b>RESPONSÁVEL PELO ENVIO</b>',
+                        signature_style,
+                    ),
+                    Paragraph(
+                        '<br/>________________________________________<br/>'
+                        '<b>RECEBIMENTO / DAP</b>',
+                        signature_style,
+                    ),
+                ]],
+                colWidths=[content_width / 2, content_width / 2],
+                style=TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('TEXTCOLOR', (0, 0), (-1, -1), texto_suave),
+                ]),
+            ),
+        ])
+
+    doc.build(story, onFirstPage=desenhar_identidade_visual, onLaterPages=desenhar_identidade_visual)
+    buffer.seek(0)
+    return buffer
+
 def remover_item_sessao(request, index):
     """ Remove um item específico da lista temporária antes de gerar o PDF """
     if 'lista_materiais' in request.session:
@@ -162,71 +506,15 @@ def registrar_material(request):
                         quantidade=item['quantidade']
                     )
                 
-                # 2. Cria o PDF em um Buffer isolado na memória
-                buffer = io.BytesIO()
-                doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
-                story = []
-                styles = getSampleStyleSheet()
-                
-                BORDÔ_RIPAT = colors.HexColor('#4A1525')
-                CINZA_TEXTO = colors.HexColor('#334155')
-                CINZA_CLARO = colors.HexColor('#f8fafc')
-                LINHA_GRID = colors.HexColor('#e2e8f0')
-                
-                title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=14, leading=18, textColor=BORDÔ_RIPAT, alignment=1)
-                subtitle_style = ParagraphStyle('DocSubTitle', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=13, textColor=CINZA_TEXTO, alignment=1)
-                normal_style = ParagraphStyle('DocNormal', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=15, textColor=CINZA_TEXTO)
-                header_table_style = ParagraphStyle('TableHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, leading=12, textColor=colors.white)
-                table_cell_style = ParagraphStyle('TableCell', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, textColor=CINZA_TEXTO)
-                style_assinatura = ParagraphStyle('DocSignature', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=14, textColor=CINZA_TEXTO, alignment=1)
-                
-                story.append(Paragraph("UNIVERSIDADE FEDERAL DO PARÁ", title_style))
-                story.append(Paragraph("SISTEMA DE LOGÍSTICA REVERSA DE RESÍDUOS TECNOLÓGICOS", subtitle_style))
-                story.append(Paragraph(f"Guia de Entrega de Materiais - Gerada em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}", subtitle_style))
-                story.append(Spacer(1, 20))
-                
-                unidade_origem = lista[0]['unidade']
-                story.append(Paragraph(f"<b>Unidade/Setor de Origem:</b> {escape(unidade_origem)}", normal_style))
-                story.append(Paragraph("<b>Instruções:</b> Imprima este relatório e apresente-o assinado junto com os itens físicos no local de coleta.", normal_style))
-                story.append(Spacer(1, 20))
-                
-                dados_tabela = [[Paragraph("Categoria", header_table_style), Paragraph("Modelo / Descrição", header_table_style), Paragraph("Qtd", header_table_style)]]
-                
-                for item in lista:
-                    dados_tabela.append([
-                        Paragraph(escape(item['categoria_exibicao']), table_cell_style),
-                        Paragraph(escape(item['modelo']), table_cell_style),
-                        Paragraph(str(item['quantidade']), table_cell_style)
-                    ])
-                
-                tabela = Table(dados_tabela, colWidths=[150, 310, 50])
-                tabela.setStyle(TableStyle([
-                    ('BACKGROUND', (0,0), (-1,0), BORDÔ_RIPAT),
-                    ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                    ('TOPPADDING', (0,0), (-1,-1), 8),
-                    ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-                    ('LINEBELOW', (0,0), (-1,-1), 0.5, LINHA_GRID),
-                    ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, CINZA_CLARO])
-                ]))
-                story.append(tabela)
-                story.append(Spacer(1, 50))
-                
-                coluna_esquerda = Paragraph("____________________________________________<br/><br/>Assinatura do Responsável pelo Envio<br/>(Origem)", style_assinatura)
-                coluna_direita = Paragraph("____________________________________________<br/><br/>Assinatura do Recebedor<br/>(Unidade de Logística Reversa)", style_assinatura)
-                
-                tabela_assinaturas = Table([[coluna_esquerda, coluna_direita]], colWidths=[255, 255])
-                tabela_assinaturas.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'TOP')]))
-                story.append(tabela_assinaturas)
-                
-                doc.build(story)
+                # 2. Gera um relatório no formato do formulário de entrega da UFPA.
+                buffer = gerar_relatorio_entrega(lista)
                 
                 # 3. Limpa a sessão e retorna o arquivo PDF isolado
                 request.session['lista_materiais'] = []
                 buffer.seek(0)
                 
                 response = HttpResponse(buffer, content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="guia_descarte_ufpa_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
+                response['Content-Disposition'] = f'attachment; filename="relatorio_entregas_ufpa_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
                 return response
             else:
                 return redirect('home')
