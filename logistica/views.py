@@ -227,8 +227,8 @@ def gerar_relatorio_entrega(lista):
         logo_x = page_width * 0.15
         logo_y = page_height - 52
         for filename, center_x, max_width, max_height, center_y in [
-            ('image2.png', logo_x, 72, 72, logo_y),
-            ('image1.jpeg', page_width * 0.85, 54, 72, page_height - 52),
+            ('logo_logistica_reversa_com_mascote.png', logo_x, 78, 76, logo_y),
+            ('image1.jpeg', page_width - logo_x, 78, 76, logo_y),
         ]:
             image = ImageReader(str(asset_dir / filename))
             image_width, image_height = image.getSize()
@@ -243,20 +243,6 @@ def gerar_relatorio_entrega(lista):
                 height=height,
                 mask='auto',
             )
-
-        mascot = ImageReader(str(asset_dir / 'image3.png'))
-        mascot_width, mascot_height = mascot.getSize()
-        mascot_scale = min(25 / mascot_width, 27 / mascot_height)
-        mascot_width *= mascot_scale
-        mascot_height *= mascot_scale
-        canvas.drawImage(
-            mascot,
-            logo_x - mascot_width / 2,
-            logo_y - mascot_height / 2,
-            width=mascot_width,
-            height=mascot_height,
-            mask='auto',
-        )
 
         canvas.setFillColor(verde_escuro)
         canvas.setFont('Helvetica-Bold', 14)

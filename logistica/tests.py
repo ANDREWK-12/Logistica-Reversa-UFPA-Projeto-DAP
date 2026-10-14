@@ -97,6 +97,6 @@ class RegistroRelatorioTests(TestCase):
         self.assertIn('attachment;', response['Content-Disposition'])
         self.assertTrue(response.content.startswith(b'%PDF'))
         self.assertIn(b'/Count 2', response.content)
-        self.assertGreaterEqual(response.content.count(b'/Subtype /Image'), 6)
+        self.assertGreaterEqual(response.content.count(b'/Subtype /Image'), 5)
         self.assertEqual(MaterialDescarte.objects.count(), 4)
         self.assertEqual(self.client.session['lista_materiais'], [])
